@@ -1,0 +1,18 @@
+{
+  "name": "Studio Kali – Věrnostní program",
+  "short_name": "Kali Loyalty",
+  "description": "5 návštěv = 50% sleva",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0c0a",
+  "theme_color": "#c9a96e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
