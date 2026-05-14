@@ -2,20 +2,233 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#0e0c0a">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0805">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kali Loyalty">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.png">
+<link rel="apple-touch-icon" href="logo.png">
 <title>Studio Kali – Věrnostní program</title>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0805; font-family: Georgia, serif; }
+input { outline: none; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-8px)} }
+@keyframes stampin { 0%{transform:scale(1.4) rotate(-10deg);opacity:0} 100%{transform:scale(1) rotate(0);opacity:1} }
+</style>
 </head>
-<body style="margin:0;padding:0;background:#0e0c0a;">
+<body>
 <div id="root"></div>
-<script type="text/babel" src="app.jsx"></script>
+<script type="text/babel">
+const { useState } = React;
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyRV0_O4JauY0oJU7WThJj1oeVRUVfMITnASl05tpkveuk882CqCSATbBxAbg83XL-w/exec";
+const STAMP_GOAL = 5;
+const LOGO_URL = "https://raw.githubusercontent.com/Timur1985b/kali-loyalty/main/logo.png";
+const TIMUR_URL = "https://raw.githubusercontent.com/Timur1985b/kali-loyalty/main/timur.png";
+
+const gold = "#c9a96e";
+const dark = "#0a0805";
+const cardBg = "#141210";
+const border = "#3a2e20";
+
+const SERVICES = [
+  { name: "Střih", price: 600, emoji: "✂️" },
+  { name: "Barvení", price: 2200, emoji: "🎨" },
+  { name: "Melír", price: 1800, emoji: "✨" },
+  { name: "Balayage", price: 2500, emoji: "🌊" },
+  { name: "Keratin", price: 3000, emoji: "💫" },
+  { name: "Řasy", price: 900, emoji: "👁️" },
+];
+
+const LINKS = [
+  { label: "Web", url: "https://www.studiokali.cz", svg: `<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/></svg>` },
+  { label: "Rezervace", url: "https://noona.app/cs/studiokali", svg: `<svg viewBox='0 0 24 24' fill='currentColor'><path d='M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z'/></svg>` },
+  { label: "Instagram", url: "https://instagram.com/kali_hair_beauty_studio", svg: `<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z'/></svg>` },
+  { label: "Facebook", url: "https://www.facebook.com/kalihairstudio/", svg: `<svg viewBox='0 0 24 24' fill='currentColor'><path d='M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z'/></svg>` },
+  { label: "TikTok", url: "https://www.tiktok.com/@beautystudiokali", svg: `<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z'/></svg>` },
+  { label: "Music", url: "https://music.apple.com/cz/artist/kalibest/1800185618", svg: `<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12 0C5.374 0 0 5.373 0 12c0 6.628 5.374 12 12 12 6.628 0 12-5.372 12-12 0-6.627-5.372-12-12-12zm3.25 5.5v8.25a2.75 2.75 0 11-2.75-2.75c.532 0 1.028.152 1.45.414V7.353l-5.2 1.2V15a2.75 2.75 0 11-2.75-2.75c.532 0 1.028.152 1.45.414V6.35L15.25 5.5z'/></svg>` },
+  { label: "YouTube", url: "https://www.youtube.com/@KALIBESTMediaGroup", svg: `<svg viewBox='0 0 24 24' fill='currentColor'><path d='M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/></svg>` },
+];
+
+function LoadingDots() {
+  return React.createElement('span', { style: { display: 'inline-flex', gap: 4, alignItems: 'center' } },
+    [0,1,2].map(i => React.createElement('span', { key: i, style: {
+      width: 7, height: 7, borderRadius: '50%', background: gold,
+      animation: `bounce 1.2s ${i*0.2}s infinite ease-in-out`,
+    }}))
+  );
+}
+
+function Logo() {
+  return React.createElement('div', { style: { textAlign: 'center', width: '100%' } },
+    React.createElement('img', { src: LOGO_URL, alt: 'Studio Kali', style: {
+      width: 150, height: 150, borderRadius: '50%', marginBottom: 16,
+      border: `3px solid ${gold}77`, boxShadow: `0 0 32px ${gold}44`, display: 'inline-block'
+    }})
+  );
+}
+
+function SocialLinks() {
+  return React.createElement('div', { style: { marginTop: 28, borderTop: `1px solid ${border}`, paddingTop: 20 } },
+    React.createElement('div', { style: { fontSize: 9, letterSpacing: 4, color: '#4a3a2a', textTransform: 'uppercase', marginBottom: 16, textAlign: 'center' } }, 'Sledujte nás'),
+    React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' } },
+      LINKS.map(l => React.createElement('a', {
+        key: l.label, href: l.url, target: '_blank', rel: 'noopener noreferrer',
+        style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 14px', background: cardBg, border: `1px solid ${border}`, borderRadius: 4, color: gold, textDecoration: 'none', width: 72 }
+      },
+        React.createElement('span', { style: { width: 24, height: 24, color: gold }, dangerouslySetInnerHTML: { __html: l.svg } }),
+        React.createElement('span', { style: { fontSize: 10, color: '#6a5a4a', fontFamily: 'Georgia, serif', letterSpacing: 1 } }, l.label)
+      ))
+    )
+  );
+}
+
+function App() {
+  const [screen, setScreen] = useState('search');
+  const [searchName, setSearchName] = useState('');
+  const [searchPhone, setSearchPhone] = useState('');
+  const [client, setClient] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedService, setSelectedService] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [isNew, setIsNew] = useState(false);
+
+  async function findOrRegister() {
+    if (!searchName.trim() || !searchPhone.trim()) { setError('Vyplňte prosím jméno a telefon.'); return; }
+    setLoading(true); setError('');
+    try {
+      const res = await fetch(`${SCRIPT_URL}?action=findOrRegister&name=${encodeURIComponent(searchName.trim())}&phone=${encodeURIComponent(searchPhone.trim())}`);
+      const data = await res.json();
+      if (data.found) { setClient(data); setIsNew(false); setScreen('card'); }
+      else if (data.success) { setClient({ name: searchName.trim(), phone: searchPhone.trim(), points: 0, lastVisit: new Date().toLocaleDateString('cs-CZ') }); setIsNew(true); setScreen('card'); }
+      else { setError('Chyba. Zkuste to znovu.'); }
+    } catch(e) { setClient({ name: searchName.trim(), phone: searchPhone.trim(), points: 0, lastVisit: new Date().toLocaleDateString('cs-CZ') }); setIsNew(true); setScreen('card'); }
+    setLoading(false);
+  }
+
+  async function refreshClient() {
+    setSyncing(true);
+    try { const res = await fetch(`${SCRIPT_URL}?action=get&name=${encodeURIComponent(client.name)}`); const data = await res.json(); if (data.found) setClient(data); } catch(e) {}
+    setSyncing(false);
+  }
+
+  const progress = Math.min(client?.points || 0, STAMP_GOAL);
+  const canRedeem = (client?.points || 0) >= STAMP_GOAL;
+
+  if (screen === 'search') return (
+    <div style={{ minHeight: '100vh', background: dark, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
+      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <Logo />
+        <div style={{ fontSize: 9, letterSpacing: 6, color: gold, marginBottom: 10, textTransform: 'uppercase' }}>Studio Kali · Praha</div>
+        <h1 style={{ fontSize: 28, fontWeight: 400, color: '#f0ebe3', margin: '0 0 8px', letterSpacing: 1 }}>Věrnostní program</h1>
+        <p style={{ color: '#6a5a4a', fontSize: 13, margin: 0, fontStyle: 'italic' }}>5 návštěv = 50% sleva na libovolnou službu</p>
+      </div>
+      <div style={{ width: '100%', maxWidth: 380 }}>
+        <input value={searchName} onChange={e => setSearchName(e.target.value)} placeholder="Vaše jméno" style={{ width: '100%', padding: '15px 18px', marginBottom: 10, background: cardBg, border: `1px solid ${border}`, borderRadius: 3, color: '#f0ebe3', fontSize: 15, fontFamily: 'Georgia, serif' }} />
+        <input value={searchPhone} onChange={e => setSearchPhone(e.target.value)} onKeyDown={e => e.key === 'Enter' && findOrRegister()} placeholder="Telefon" type="tel" style={{ width: '100%', padding: '15px 18px', marginBottom: 14, background: cardBg, border: `1px solid ${border}`, borderRadius: 3, color: '#f0ebe3', fontSize: 15, fontFamily: 'Georgia, serif' }} />
+        {error && <p style={{ color: '#c97a6a', fontSize: 12, margin: '0 0 10px', textAlign: 'center' }}>{error}</p>}
+        <button onClick={findOrRegister} disabled={loading} style={{ width: '100%', padding: 17, background: loading ? '#2a2420' : `linear-gradient(135deg, ${gold}, #a07840)`, border: 'none', borderRadius: 3, color: loading ? '#6a5a4a' : dark, fontSize: 14, letterSpacing: 3, textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Georgia, serif', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          {loading ? 'Načítám...' : 'Zobrazit kartu ✦'}
+        </button>
+      </div>
+      <SocialLinks />
+    </div>
+  );
+
+  if (screen === 'success') return (
+    <div style={{ minHeight: '100vh', background: dark, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
+      <Logo />
+      <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
+      <div style={{ fontSize: 10, letterSpacing: 6, color: gold, marginBottom: 10, textTransform: 'uppercase' }}>Gratulujeme!</div>
+      <h2 style={{ fontSize: 26, fontWeight: 400, color: '#f0ebe3', margin: '0 0 12px' }}>Sleva aktivována!</h2>
+      <p style={{ color: '#8a7a6a', fontSize: 16, marginBottom: 4 }}>{selectedService?.emoji} {selectedService?.name}</p>
+      <p style={{ color: gold, fontSize: 32, fontWeight: 700, margin: '8px 0 4px' }}>{Math.round(selectedService?.price * 0.5)} Kč</p>
+      <p style={{ color: '#4a3a2a', fontSize: 14, marginBottom: 8, textDecoration: 'line-through' }}>{selectedService?.price} Kč</p>
+      <p style={{ color: '#6a5a4a', fontSize: 12, marginBottom: 28, fontStyle: 'italic' }}>Ukažte tento ekran mistrovi</p>
+      <button onClick={() => setScreen('card')} style={{ padding: '14px 40px', background: 'transparent', border: `1px solid ${gold}`, borderRadius: 3, color: gold, fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>← Zpět na kartu</button>
+    </div>
+  );
+
+  if (screen === 'redeem') return (
+    <div style={{ minHeight: '100vh', background: dark, padding: 24 }}>
+      <button onClick={() => setScreen('card')} style={{ background: 'none', border: 'none', color: gold, fontSize: 12, cursor: 'pointer', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 24, padding: 0 }}>← Zpět</button>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}><Logo /></div>
+      <div style={{ fontSize: 10, letterSpacing: 6, color: gold, textTransform: 'uppercase', marginBottom: 8 }}>Vyberte službu</div>
+      <h2 style={{ fontSize: 24, fontWeight: 400, color: '#f0ebe3', margin: '0 0 4px' }}>Sleva 50%</h2>
+      <p style={{ color: '#6a5a4a', fontSize: 13, marginBottom: 20, fontStyle: 'italic' }}>Použít 5 bodů</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {SERVICES.map(s => (
+          <button key={s.name} onClick={() => { setSelectedService(s); setScreen('success'); }} style={{ padding: '16px 20px', background: cardBg, border: `1px solid ${border}`, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 22 }}>{s.emoji}</span>
+              <span style={{ color: '#f0ebe3', fontSize: 15, fontFamily: 'Georgia, serif' }}>{s.name}</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ color: gold, fontSize: 17, fontWeight: 700 }}>{Math.round(s.price * 0.5)} Kč</div>
+              <div style={{ color: '#4a3a2a', fontSize: 11, textDecoration: 'line-through' }}>{s.price} Kč</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: '100vh', background: dark, padding: '28px 20px', fontFamily: 'Georgia, serif' }}>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <Logo />
+        <div style={{ fontSize: 9, letterSpacing: 6, color: gold, marginBottom: 6, textTransform: 'uppercase' }}>Studio Kali · Praha</div>
+        {isNew && <div style={{ background: '#1a2a1a', border: '1px solid #4a8a4a', borderRadius: 3, padding: '8px 16px', marginBottom: 10, color: '#6abf6a', fontSize: 13 }}>✓ Vítejte! Váš účet byl vytvořen.</div>}
+        <h2 style={{ fontSize: 26, fontWeight: 400, color: '#f0ebe3', margin: '0 0 4px' }}>Ahoj, {client?.name}! 👋</h2>
+        <p style={{ color: '#6a5a4a', fontSize: 13, margin: '0 0 16px', fontStyle: 'italic' }}>Poslední návštěva: {client?.lastVisit || '—'}</p>
+      </div>
+
+      <div style={{ position: 'relative', border: `2px solid ${border}`, borderRadius: 6, padding: '24px 20px', marginBottom: 14, boxShadow: `0 0 30px ${gold}11`, overflow: 'hidden', background: '#0a0805' }}>
+        <img src={TIMUR_URL} alt="" style={{ position: 'absolute', bottom: 0, right: -20, height: '95%', width: 'auto', objectFit: 'contain', objectPosition: 'bottom right', opacity: 0.18, pointerEvents: 'none', zIndex: 0 }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div style={{ fontSize: 16, letterSpacing: 3, color: gold, textTransform: 'uppercase', fontWeight: 700 }}>Věrnostní karta</div>
+            <div style={{ fontSize: 14, color: '#8a7a6a', fontWeight: 600 }}>{progress}/{STAMP_GOAL} bodů</div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 20 }}>
+            {Array.from({ length: STAMP_GOAL }).map((_, i) => (
+              <div key={i} style={{ width: 58, height: 58, borderRadius: '50%', border: i < progress ? `2px solid ${gold}` : `2px dashed ${border}`, background: i < progress ? `linear-gradient(135deg, ${gold}, #a07840)` : '#0e0c0a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, boxShadow: i < progress ? `0 0 12px ${gold}55` : 'none', animation: i < progress ? 'stampin 0.5s ease' : 'none' }}>
+                {i < progress ? <span style={{ color: dark, fontWeight: 700 }}>✦</span> : <span style={{ color: '#2a2420', fontSize: 18 }}>✦</span>}
+              </div>
+            ))}
+          </div>
+          <div style={{ height: 4, background: '#1a1410', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 2, background: `linear-gradient(90deg, ${gold}, #a07840)`, width: `${(progress / STAMP_GOAL) * 100}%`, transition: 'width 0.6s ease', boxShadow: `0 0 8px ${gold}88` }} />
+          </div>
+          <p style={{ textAlign: 'center', color: '#8a7a6a', fontSize: 13, margin: '16px 0 0', fontStyle: 'italic' }}>
+            {canRedeem ? '🎉 Máte nárok na slevu!' : `Ještě ${STAMP_GOAL - progress} ${STAMP_GOAL - progress === 1 ? 'návštěva' : 'návštěvy'} do slevy 50%`}
+          </p>
+        </div>
+      </div>
+
+      {canRedeem && (
+        <button onClick={() => setScreen('redeem')} style={{ width: '100%', padding: 17, marginBottom: 12, background: `linear-gradient(135deg, ${gold}, #a07840)`, border: 'none', borderRadius: 3, color: dark, fontSize: 15, letterSpacing: 2, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Georgia, serif', fontWeight: 700 }}>
+          🎁 Použít slevu 50%
+        </button>
+      )}
+
+      <button onClick={refreshClient} disabled={syncing} style={{ width: '100%', padding: 14, marginBottom: 10, background: 'transparent', border: `1px solid ${border}`, borderRadius: 3, color: '#8a7a6a', fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Georgia, serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        {syncing ? 'Aktualizuji...' : '↻ Aktualizovat body'}
+      </button>
+
+      <SocialLinks />
+      <button onClick={() => { setClient(null); setSearchName(''); setSearchPhone(''); setScreen('search'); }} style={{ background: 'none', border: 'none', color: '#3a2a1a', fontSize: 11, cursor: 'pointer', display: 'block', margin: '16px auto 0', fontFamily: 'Georgia, serif' }}>odhlásit se</button>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
 </body>
 </html>
